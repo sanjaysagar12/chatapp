@@ -17,7 +17,7 @@ COPY chat_app/ ./
 RUN npm run build
 
 # Build Go app stage
-FROM golang:1.23.3-alpine AS go-builder
+FROM golang:1.20-alpine AS go-builder
 
 # Add git and build dependencies for SQLite
 RUN apk add --no-cache git build-base
@@ -26,7 +26,8 @@ RUN apk add --no-cache git build-base
 WORKDIR /app
 
 # Copy go mod and sum files
-COPY go.mod go.sum ./
+COPY go.mod ./
+COPY go.sum ./
 
 # Download dependencies
 RUN go mod download
@@ -48,7 +49,7 @@ WORKDIR /root/
 # Copy the binary from builder
 COPY --from=go-builder /app/main .
 
-# Copy the built React app
+# Copy the built React app to the static directory
 COPY --from=react-builder /app/frontend/dist /root/static
 
 # Create a directory for the database
@@ -57,6 +58,7 @@ VOLUME /data
 
 # Environment variable for database path
 ENV DB_PATH=/data/turplemq.db
+ENV STATIC_DIR=/root/static
 
 # Expose the port the app runs on
 EXPOSE 8080

@@ -153,9 +153,21 @@ func serveStaticFiles() http.Handler {
 		// For debugging
 		log.Printf("Request for path: %s", r.URL.Path)
 
+		// Special handling for asset files
+		if strings.HasPrefix(r.URL.Path, "/assets/") {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
 		// Serve index.html for the root path
 		if r.URL.Path == "/" {
-			http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+			indexPath := filepath.Join(staticDir, "index.html")
+			if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+				log.Printf("index.html not found at %s", indexPath)
+				http.Error(w, "index.html not found", http.StatusNotFound)
+				return
+			}
+			http.ServeFile(w, r, indexPath)
 			return
 		}
 
@@ -163,9 +175,15 @@ func serveStaticFiles() http.Handler {
 		path := filepath.Join(staticDir, r.URL.Path)
 		_, err := os.Stat(path)
 
-		// If the file doesn't exist, serve index.html for client-side routing
+		// If the file doesn't exist or if it's a client-side route, serve index.html
 		if os.IsNotExist(err) || strings.HasPrefix(r.URL.Path, "/room/") {
-			http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+			indexPath := filepath.Join(staticDir, "index.html")
+			if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+				log.Printf("index.html not found at %s", indexPath)
+				http.Error(w, "index.html not found", http.StatusNotFound)
+				return
+			}
+			http.ServeFile(w, r, indexPath)
 			return
 		}
 

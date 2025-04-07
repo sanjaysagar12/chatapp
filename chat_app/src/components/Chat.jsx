@@ -43,7 +43,12 @@ const Chat = () => {
 
   // Connect to WebSocket server
   const connectToWebSocket = (room, isNewRoom = false) => {
-    const socket = new WebSocket('ws://localhost:8080');
+    // Get the correct WebSocket URL based on current location
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    console.log(`Connecting to WebSocket at ${wsUrl}`);
+    const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 
     socket.onopen = () => {
@@ -101,7 +106,8 @@ const Chat = () => {
   // Fetch previous messages for a room
   const fetchPreviousMessages = async (room) => {
     try {
-      const response = await fetch(`http://localhost:8080/messages?topic=${room}`);
+      // Use relative URL for API requests
+      const response = await fetch(`/messages?topic=${room}`);
       const data = await response.json();
       
       if (data.messages && Array.isArray(data.messages)) {
